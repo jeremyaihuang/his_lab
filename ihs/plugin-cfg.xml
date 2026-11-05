@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Config ASDisableNagle="false" AcceptAllContent="true" AppServerPortPreference="HostHeader" ChunkedResponse="false"
+        FIPSEnable="false" IISDisableNagle="false" IISPluginPriority="High" IgnoreDNSFailures="true" RefreshInterval="60"
+        ResponseChunkSize="64" SSLConsolidate="true" TrustedProxyEnable="false" VHostMatchingCompat="false">
+   <Log LogLevel="Error" Name="/opt/IHS/plugin/logs/webserver1/http_plugin.log"/>
+   <Property Name="ESIEnable" Value="false"/>
+   <VirtualHostGroup Name="default_host">
+      <VirtualHost Name="*:*"/>
+   </VirtualHostGroup>
+   <ServerCluster CloneSeparatorChange="false" LoadBalance="Round Robin" Name="his_cluster" PostBufferSize="0"
+                  PostSizeLimit="-1" RemoveSpecialHeaders="true" RetryInterval="10" ServerIOTimeoutRetry="-1">
+      <Server ConnectTimeout="5" ExtendedHandshake="false" MaxConnections="-1" Name="was_his" ServerIOTimeout="90" WaitForContinue="false">
+         <Transport Hostname="hospital-was-his" Port="9080" Protocol="http"/>
+      </Server>
+      <PrimaryServers><Server Name="was_his"/></PrimaryServers>
+   </ServerCluster>
+   <ServerCluster CloneSeparatorChange="false" LoadBalance="Round Robin" Name="pharmacy_cluster" PostBufferSize="0"
+                  PostSizeLimit="-1" RemoveSpecialHeaders="true" RetryInterval="10" ServerIOTimeoutRetry="-1">
+      <Server ConnectTimeout="5" ExtendedHandshake="false" MaxConnections="-1" Name="was_pharmacy" ServerIOTimeout="90" WaitForContinue="false">
+         <Transport Hostname="hospital-was-pharmacy" Port="9080" Protocol="http"/>
+      </Server>
+      <PrimaryServers><Server Name="was_pharmacy"/></PrimaryServers>
+   </ServerCluster>
+   <UriGroup Name="his_uris"><Uri AffinityCookie="JSESSIONID" Name="/his/*"/></UriGroup>
+   <UriGroup Name="pharmacy_uris"><Uri AffinityCookie="JSESSIONID" Name="/pharmacy/*"/></UriGroup>
+   <Route ServerCluster="his_cluster" UriGroup="his_uris" VirtualHostGroup="default_host"/>
+   <Route ServerCluster="pharmacy_cluster" UriGroup="pharmacy_uris" VirtualHostGroup="default_host"/>
+</Config>

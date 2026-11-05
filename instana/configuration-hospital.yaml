@@ -1,0 +1,22 @@
+# Db2 監控（Agent 在 DB2 所在節點自動發現 db2sysc 程序，以 local 方式連線）
+com.instana.plugin.db2:
+  local:
+    - instance: 'db2inst1'
+      port: '50000'
+      user: 'db2inst1'
+      password: '${DB2_PASSWORD}'
+      tabschema: 'HIS'
+      poll_rate: 10
+      databases:
+        - 'HISDB'
+
+# WebSphere traditional：已開啟管理安全性，需要 admin 帳密才能讀 PMI
+com.instana.plugin.websphere:
+  username: '${WAS_ADMIN_USER}'
+  password: '${WAS_ADMIN_PASSWORD}'
+  enable_pmi: true
+  poll_rate: 5
+
+# IBM HTTP Server：從 mod_status (/server-status) 取指標；不啟用 IHS tracing
+com.instana.plugin.httpd:
+  poll_rate: 5

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>仁心醫院 醫療資訊系統</title>
+<link rel="stylesheet" href="/app/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">✚</div>
+    <div>
+      <div class="brand-name">仁心醫院</div>
+      <div class="brand-sub">醫療資訊系統 HIS</div>
+    </div>
+  </div>
+  <div class="stats" id="stats">
+    <div class="stat"><span class="stat-num" id="st-total">–</span><span class="stat-label">今日掛號</span></div>
+    <div class="stat"><span class="stat-num" id="st-done">–</span><span class="stat-label">已看診</span></div>
+    <div class="stat"><span class="stat-num" id="st-wait">–</span><span class="stat-label">候診中</span></div>
+    <div class="stat"><span class="stat-num" id="st-rx">–</span><span class="stat-label">待領藥</span></div>
+  </div>
+  <div class="clock" id="clock"></div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="register" role="tab">🧾 櫃台掛號</button>
+  <button class="tab" data-tab="doctor" role="tab">🩺 醫師看診</button>
+  <button class="tab" data-tab="pharmacy" role="tab">💊 藥局調劑</button>
+  <button class="tab" data-tab="records" role="tab">📋 病歷查詢</button>
+</nav>
+
+<div id="alert" class="alert hidden" role="alert"></div>
+
+<main>
+  <!-- ============ 櫃台掛號 ============ -->
+  <section id="tab-register" class="panel active">
+    <div class="grid two">
+      <div class="card">
+        <h2>1. 查詢病患</h2>
+        <form class="search" data-search="register">
+          <input type="search" placeholder="病歷號（A000000123）、病患編號或姓名" required>
+          <button class="btn primary">查詢</button>
+        </form>
+        <div class="hint">試試：<a href="#" data-q="123">123</a>、<a href="#" data-q="A000000456">A000000456</a>、<a href="#" data-q="陳">陳</a>、<a href="#" data-q="150">150（無健保卡）</a></div>
+        <div class="results" data-results="register"></div>
+      </div>
+      <div class="card">
+        <h2>2. 選擇科別並掛號</h2>
+        <div id="reg-patient" class="empty">請先在左側選擇病患</div>
+        <div id="reg-depts" class="dept-grid"></div>
+        <button id="reg-submit" class="btn primary big" disabled>確認掛號</button>
+        <div id="reg-result"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 醫師看診 ============ -->
+  <section id="tab-doctor" class="panel">
+    <div class="grid doctor">
+      <div class="card">
+        <h2>看診清單</h2>
+        <label class="field">科別<select id="doc-dept"></select></label>
+        <label class="field">醫師<select id="doc-doctor"></select></label>
+        <button id="doc-refresh" class="btn">重新整理</button>
+        <div id="doc-queue" class="queue"></div>
+      </div>
+      <div class="card" id="doc-visit">
+        <div class="empty">請從左側看診清單選擇病患</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 藥局調劑 ============ -->
+  <section id="tab-pharmacy" class="panel">
+    <div class="grid doctor">
+      <div class="card">
+        <h2>藥品庫存查詢</h2>
+        <form class="search" id="drug-search">
+          <input type="search" placeholder="藥名（Amoxicillin）或藥品代碼">
+          <button class="btn primary">查詢</button>
+        </form>
+        <div id="drug-results" class="results"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>處方調劑</h2>
+          <div class="seg">
+            <button class="seg-btn active" data-rx="NEW">待調劑</button>
+            <button class="seg-btn" data-rx="DISPENSED">已領藥</button>
+          </div>
+          <button id="rx-refresh" class="btn">重新整理</button>
+        </div>
+        <div id="rx-list" class="rx-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 病歷查詢 ============ -->
+  <section id="tab-records" class="panel">
+    <div class="grid two">
+      <div class="card">
+        <h2>查詢病患</h2>
+        <form class="search" data-search="records">
+          <input type="search" placeholder="病歷號、病患編號或姓名" required>
+          <button class="btn primary">查詢</button>
+        </form>
+        <div class="results" data-results="records"></div>
+      </div>
+      <div class="card" id="rec-detail">
+        <div class="empty">請先選擇病患</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="statusbar">
+  <span id="sb-last">尚未呼叫 API</span>
+  <span class="sb-sep">｜</span>
+  <span>IBM HTTP Server → WebSphere (門診 / 藥局) → Db2 HISDB</span>
+  <span class="sb-sep">｜</span>
+  <a href="/ops/chaos.html">⚠ 錯誤情境控制台</a>
+</footer>
+
+<script src="/app/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# 仁心醫院 HIS — 模擬流量（python:3.12-slim + ConfigMap 腳本，不需要另外 build image）
+# ConfigMap hospital-loadgen 由 scripts/deploy.sh 從 loadgen/loadgen.py 建立
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hospital-loadgen
+  namespace: hospital
+  labels: {app: hospital-loadgen, tier: tools}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: hospital-loadgen}}
+  template:
+    metadata:
+      labels: {app: hospital-loadgen, tier: tools}
+    spec:
+      containers:
+      - name: loadgen
+        image: python:3.12-slim
+        command: ["python3", "-u", "/app/loadgen.py"]
+        env:
+        - {name: TARGET, value: "http://hospital-ihs:8080"}
+        - {name: WORKERS, value: "6"}
+        - {name: THINK, value: "0.8"}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+        volumeMounts:
+        - {name: script, mountPath: /app}
+      volumes:
+      - name: script
+        configMap: {name: hospital-loadgen}

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>錯誤情境控制台</title>
+<link rel="stylesheet" href="/app/style.css">
+<style>
+  .topbar { background: #4a2a2a; }
+  .logo { color: #4a2a2a; }
+  .sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  .sc { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+  .sc.on { border-color: var(--err); background: var(--err-soft); }
+  .sc-head { display: flex; align-items: center; gap: 10px; }
+  .sc-name { font-weight: 700; font-family: ui-monospace, Menlo, monospace; flex: 1; }
+  .sc-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .sc-watch { font-size: 12px; color: var(--brand-dark); background: var(--brand-soft); border-radius: 6px; padding: 6px 8px; }
+  .sc-ctl { display: flex; gap: 8px; align-items: center; }
+  .sc-ctl input { width: 110px; }
+  .sc-ctl .unit { font-size: 13px; color: var(--muted); flex: 1; }
+  .state { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); }
+  .sc.on .state { background: var(--err); color: #fff; }
+  .btn.danger { background: var(--err); border-color: var(--err); color: #fff; }
+  .meta-line { font-size: 13px; color: var(--muted); }
+  .log { font-family: ui-monospace, Menlo, monospace; font-size: 12px; max-height: 180px; overflow-y: auto; background: #1c2b33; color: #d6e2e6; border-radius: 8px; padding: 10px 12px; }
+  section + section { margin-top: 24px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">⚠</div>
+    <div>
+      <div class="brand-name">錯誤情境控制台</div>
+      <div class="brand-sub">仁心醫院 HIS · Instana 展示用</div>
+    </div>
+  </div>
+  <div class="stats"></div>
+  <a href="/" style="color:#fff">← 回醫院系統</a>
+  <button id="reset" class="btn danger">全部關閉 / 恢復</button>
+</header>
+
+<main>
+  <div id="alert" class="alert hidden" role="alert"></div>
+  <section>
+    <div class="card-head"><h2>門診 WAS（his-outpatient）</h2><span class="meta-line" id="meta-his"></span></div>
+    <div class="sc-grid" id="grid-his"></div>
+  </section>
+  <section>
+    <div class="card-head"><h2>藥局 WAS（his-pharmacy）</h2><span class="meta-line" id="meta-pharmacy"></span></div>
+    <div class="sc-grid" id="grid-pharmacy"></div>
+  </section>
+  <section>
+    <div class="card">
+      <h3 style="margin-top:0">平台情境（需在主控台用 kubectl 執行）</h3>
+      <div class="meta-line">
+        <code>scripts/chaos.sh on pharmacy-down</code>　藥局 WAS 縮成 0 個 Pod<br>
+        <code>scripts/chaos.sh on db2-down</code>　db2stop force，所有 JDBC 失敗<br>
+        <code>scripts/chaos.sh on was-crash</code>　砍掉門診 WAS Java 程序，Pod 重啟<br>
+        用 <code>scripts/chaos.sh off &lt;情境&gt;</code> 或 <code>scripts/chaos.sh reset</code> 恢復。
+      </div>
+    </div>
+  </section>
+  <section>
+    <h3>操作紀錄</h3>
+    <div class="log" id="log"></div>
+  </section>
+</main>
+
+<script>
+// 每個情境的參數、單位與在 Instana 上該看哪裡
+const META = {
+  "slow-sql":        { watch: "AP：查病歷 Latency 飆高｜DBA：Rows Read、Bufferpool Hit Ratio 下降" },
+  "npe-bug":         { watch: "AP：POST /appointments 5xx、Error 訊息 NullPointerException（約 2% 掛號）" },
+  "register-error":  { def: 30,  unit: "% 掛號失敗", watch: "主管：掛號成功率下降｜AP：Error Rate" },
+  "mem-leak":        { def: 512, unit: "KB / 請求", watch: "中介軟體：Heap Used 持續成長、GC 時間變長，最後 OOM 重啟" },
+  "conn-leak":       { watch: "中介軟體：Connection Pool 使用率 100%、等待時間上升；AP：請求逾時" },
+  "cpu-burn":        { def: 300, unit: "ms / 請求", watch: "中介軟體：Process CPU 上升｜AP：整體 Latency" },
+  "db-lock":         { def: 40,  unit: "秒", watch: "DBA：Lock Waits、Lock Timeouts｜AP：POST /prescriptions 變慢/失敗" },
+  "deadlock":        { watch: "DBA：Deadlocks 計數｜AP：POST /prescriptions 5xx（SQL0911N）" },
+  "slow-downstream": { def: 25,  unit: "秒延遲", watch: "中介軟體：WebContainer Thread Pool 滿、Hung Threads｜AP：GET /nhi/verify Latency" },
+  "nhi-down":        { watch: "AP：GET /nhi/verify 503 → 掛號失敗｜主管：掛號成功率" },
+};
+const APPS = ["his", "pharmacy"];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function log(msg) {
+  const t = new Date().toLocaleTimeString("zh-TW", { hour12: false });
+  $("#log").insertAdjacentHTML("afterbegin", `<div>${t}  ${esc(msg)}</div>`);
+}
+function alertMsg(msg) {
+  const a = $("#alert");
+  if (!msg) { a.classList.add("hidden"); return; }
+  a.innerHTML = `<div>${esc(msg)}</div>`;
+  a.classList.remove("hidden");
+}
+
+async function api(app, method, path = "") {
+  const r = await fetch(`/${app}/api/chaos${path}`, { method });
+  const text = await r.text();
+  let body; try { body = JSON.parse(text); } catch { body = null; }
+  if (!r.ok) throw new Error(`${app} ${method} ${path || "/"} → HTTP ${r.status} ${body && body.error ? body.error : text.slice(0, 200)}`);
+  return body;
+}
+
+function render(app, d) {
+  $(`#meta-${app}`).textContent = `洩漏中連線 ${d.leakedConnections} 條 · 洩漏記憶體 ${d.leakedMemoryMb} MB`;
+  const grid = $(`#grid-${app}`);
+  const names = Object.keys(d.scenarios).sort();
+  grid.innerHTML = names.map(n => {
+    const st = d.scenarios[n], on = st !== "off", m = META[n] || {};
+    const cur = on ? st.replace(/^ON\((.*)\)$/, "$1") : "";
+    const input = m.unit
+      ? `<input type="number" min="1" data-v value="${esc(cur || m.def)}"><span class="unit">${esc(m.unit)}</span>`
+      : `<span class="unit"></span>`;
+    return `<div class="sc ${on ? "on" : ""}" data-app="${app}" data-name="${esc(n)}">
+      <div class="sc-head"><span class="sc-name">${esc(n)}</span><span class="state">${on ? "啟用中" + (cur ? " · " + esc(cur) : "") : "正常"}</span></div>
+      <div class="sc-desc">${esc(d.descriptions[n])}</div>
+      ${m.watch ? `<div class="sc-watch">👀 ${esc(m.watch)}</div>` : ""}
+      <div class="sc-ctl">${input}
+        <button class="btn ${on ? "" : "primary"}" data-act="${on ? "update" : "on"}">${on ? "更新數值" : "開啟"}</button>
+        ${on ? `<button class="btn danger" data-act="off">關閉</button>` : ""}
+      </div></div>`;
+  }).join("");
+  grid.querySelectorAll(".sc-ctl").forEach(c => { if (!c.querySelector("input")) c.querySelector("[data-act=update]")?.remove(); });
+}
+
+async function refresh() {
+  for (const app of APPS) {
+    try { render(app, await api(app, "GET")); }
+    catch (e) { $(`#grid-${app}`).innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+}
+
+document.addEventListener("click", async e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const card = btn.closest(".sc"), app = card.dataset.app, name = card.dataset.name;
+  const v = card.querySelector("[data-v]")?.value;
+  btn.classList.add("loading"); btn.disabled = true; alertMsg();
+  try {
+    if (btn.dataset.act === "off") {
+      render(app, await api(app, "DELETE", `/${encodeURIComponent(name)}`));
+      log(`關閉 ${app}:${name}`);
+    } else {
+      render(app, await api(app, "PUT", `/${encodeURIComponent(name)}${v ? "?value=" + encodeURIComponent(v) : ""}`));
+      log(`開啟 ${app}:${name}${v ? " = " + v : ""}`);
+    }
+  } catch (err) { alertMsg(err.message); log("失敗：" + err.message); refresh(); }
+});
+
+$("#reset").addEventListener("click", async () => {
+  alertMsg();
+  for (const app of APPS) {
+    try { render(app, await api(app, "DELETE")); log(`${app} 全部情境已關閉`); }
+    catch (err) { alertMsg(err.message); log("失敗：" + err.message); }
+  }
+});
+
+refresh();
+setInterval(() => { if (!document.activeElement || document.activeElement.tagName !== "INPUT") refresh(); }, 10000);
+</script>
+</body>
+</html>

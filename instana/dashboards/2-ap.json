@@ -1,0 +1,1227 @@
+{
+ "title": "仁心醫院 HIS｜2. AP 應用維運",
+ "accessRules": [
+  {
+   "accessType": "READ_WRITE",
+   "relationType": "GLOBAL",
+   "relatedId": null
+  }
+ ],
+ "widgets": [
+  {
+   "id": "w01",
+   "title": "給誰看、怎麼看",
+   "type": "markdown",
+   "x": 0,
+   "y": 0,
+   "width": 12,
+   "height": 6,
+   "config": "### 🧑‍💻 仁心醫院 HIS｜AP 應用維運\n**對象**：AP 開發、應用維運　**用途**：找出「哪一支 API 慢 / 錯」以及「是不是程式或 JVM 的問題」。\n\n看法：先看 Endpoint P95 找出變慢的交易 → 看錯誤呼叫找出出錯的服務 → 看 DB 呼叫判斷是不是 SQL 拖慢 → 最後看 JVM Heap / GC 判斷是否記憶體洩漏。點圖表上的時間點可直接跳到 Trace。"
+  },
+  {
+   "id": "w02",
+   "title": "門診 WAS：Endpoint 回應時間 P95",
+   "type": "chart",
+   "x": 0,
+   "y": 6,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "掛號",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /appointments"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "看診完成",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /visits/{apptId}/complete"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "查病歷",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /patients/{id}/records"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "查病患",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /patients/{id}"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "病患搜尋",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /patients/search"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w03",
+   "title": "藥局 WAS：Endpoint 回應時間 P95",
+   "type": "chart",
+   "x": 6,
+   "y": 6,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "開處方（扣庫存）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /prescriptions"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "健保驗證",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /nhi/verify"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "檢驗報告",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /lab/patients/{id}"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "查藥品",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /drugs/{id}"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "調劑領藥",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /prescriptions/{rxId}/dispense"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w04",
+   "title": "錯誤呼叫數（依服務）",
+   "type": "chart",
+   "x": 0,
+   "y": 19,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "erroneousCalls",
+       "aggregation": "SUM",
+       "label": "門診 his-outpatient",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "his-outpatient"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "erroneousCalls",
+       "aggregation": "SUM",
+       "label": "藥局 his-pharmacy",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "his-pharmacy"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "erroneousCalls",
+       "aggregation": "SUM",
+       "label": "資料庫 HISDB",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w05",
+   "title": "HTTP 狀態碼（左：5xx / 4xx，右：2xx）",
+   "type": "chart",
+   "x": 6,
+   "y": 19,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "SUM",
+       "label": "5xx",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "GREATER_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 500
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "LESS_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 599
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "SUM",
+       "label": "4xx",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "GREATER_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 400
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "LESS_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 499
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "SUM",
+       "label": "2xx",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "GREATER_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 200
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "LESS_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 299
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w06",
+   "title": "資料庫呼叫（JDBC → HISDB）",
+   "type": "chart",
+   "x": 0,
+   "y": 32,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "MEAN",
+       "label": "SQL 平均延遲",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "SQL P95 延遲",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "SQL 每秒呼叫",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w07",
+   "title": "JVM Heap 使用率",
+   "type": "chart",
+   "x": 6,
+   "y": 32,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "percentage.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.usedPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 WAS",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.usedPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 WAS",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w08",
+   "title": "JVM GC 時間（global / scavenge）",
+   "type": "chart",
+   "x": 0,
+   "y": 45,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.global.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 global GC",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.scavenge.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 scavenge GC",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.global.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 global GC",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.scavenge.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 scavenge GC",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w09",
+   "title": "JVM 執行緒狀態",
+   "type": "chart",
+   "x": 6,
+   "y": 45,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.blocked",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Blocked",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.waiting",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Waiting",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.blocked",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Blocked",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.waiting",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Waiting",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w10",
+   "title": "顧問建議：AP 告警門檻",
+   "type": "markdown",
+   "x": 0,
+   "y": 58,
+   "width": 12,
+   "height": 9,
+   "config": "| 指標 | 建議門檻 | 說明 |\n|---|---|---|\n| Endpoint P95 | 超過基準值 2 倍（Smart Alert 動態基準） | 交易量有日夜差異，用動態基準比固定值準 |\n| Endpoint 錯誤率 | > 1% 持續 5 分鐘 | 搭配 Trace 的例外堆疊直接定位程式 |\n| 下游呼叫錯誤（健保、藥局） | 任何 5xx 連續 3 分鐘 | 區分是自己還是外部系統的問題 |\n| Heap 使用率（GC 後） | > 85% 持續 10 分鐘 | GC 後還降不下來 = 疑似記憶體洩漏 |\n| GC 時間佔比 | > 10% | 應用程式停頓，使用者會感覺卡頓 |"
+  }
+ ]
+}

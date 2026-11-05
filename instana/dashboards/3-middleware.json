@@ -1,0 +1,712 @@
+{
+ "title": "仁心醫院 HIS｜3. 中介軟體 IHS / WAS",
+ "accessRules": [
+  {
+   "accessType": "READ_WRITE",
+   "relationType": "GLOBAL",
+   "relatedId": null
+  }
+ ],
+ "widgets": [
+  {
+   "id": "w01",
+   "title": "給誰看、怎麼看",
+   "type": "markdown",
+   "x": 0,
+   "y": 0,
+   "width": 12,
+   "height": 6,
+   "config": "### ⚙️ 仁心醫院 HIS｜中介軟體（IHS / WAS）\n**對象**：Infra、WAS / IHS 管理員　**用途**：判斷「資源池是不是滿了」— 這是 WAS 環境最常見的效能瓶頸。\n\n請求路徑：**IHS（Busy Workers）→ WAS WebContainer Thread Pool → JDBC Connection Pool → Db2**。任何一層的池子用到 100%，前面一層就會開始排隊。Hung Thread 出現代表有請求卡住超過 20 秒。"
+  },
+  {
+   "id": "w02",
+   "title": "IHS：每秒請求數",
+   "type": "chart",
+   "x": 0,
+   "y": 6,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "httpd",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "requests",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "IHS requests/s",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-ihs"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w03",
+   "title": "IHS：Worker 使用狀況（MaxRequestWorkers 150）",
+   "type": "chart",
+   "x": 6,
+   "y": 6,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "httpd",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "busy_workers",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "Busy Workers",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-ihs"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "httpd",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "worker.idle",
+       "aggregation": "MIN",
+       "crossSeriesAggregation": "MIN",
+       "label": "Idle Workers",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-ihs"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w04",
+   "title": "WAS WebContainer Thread Pool 使用率（%）",
+   "type": "chart",
+   "x": 0,
+   "y": 19,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threadPools.WebContainer.usedPoolPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 WAS（max 20）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threadPools.WebContainer.usedPoolPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 WAS（max 30）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w05",
+   "title": "WAS WebContainer Active Threads / Hung Threads",
+   "type": "chart",
+   "x": 6,
+   "y": 19,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threadPools.WebContainer.activeThreads",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Active",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threadPools.WebContainer.activeThreads",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Active",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threadPools.WebContainer.concurrentlyHungThreads",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Hung",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threadPools.WebContainer.concurrentlyHungThreads",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Hung",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w06",
+   "title": "JDBC Connection Pool 使用率（%，jdbc/HISDB，max 15）",
+   "type": "chart",
+   "x": 0,
+   "y": 32,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "datasources.HISDB.usedPoolPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 WAS",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "datasources.HISDB.usedPoolPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 WAS",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w07",
+   "title": "JDBC：等待連線的執行緒 / 平均等待時間",
+   "type": "chart",
+   "x": 6,
+   "y": 32,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "datasources.HISDB.waitingThreadCount",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 等待中",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "datasources.HISDB.waitingThreadCount",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 等待中",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "datasources.HISDB.averageWaitTime",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 平均等待(ms)",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "datasources.HISDB.averageWaitTime",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 平均等待(ms)",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w08",
+   "title": "WAS Servlet（Web Module）平均回應時間",
+   "type": "chart",
+   "x": 0,
+   "y": 45,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "servlets.his#his.war.avgResponseTime",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "his.war",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "servlets.pharmacy#pharmacy.war.avgResponseTime",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "pharmacy.war",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w09",
+   "title": "WAS 交易（Transaction）",
+   "type": "chart",
+   "x": 6,
+   "y": 45,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "transactions.activeCount",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Active Tx",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "webSphereApplicationContainer",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "transactions.activeCount",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Active Tx",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w10",
+   "title": "顧問建議：中介軟體告警門檻",
+   "type": "markdown",
+   "x": 0,
+   "y": 58,
+   "width": 12,
+   "height": 9,
+   "config": "| 指標 | 轉黃 | 轉紅 | 處理方向 |\n|---|---|---|---|\n| IHS Busy Workers / MaxRequestWorkers | > 70% | > 90% | 後端變慢的前兆；先查 WAS，不要急著加大 IHS |\n| WebContainer Thread Pool 使用率 | > 80% | 100% 持續 3 分鐘 | 搭配 Trace 找出卡住的下游呼叫 |\n| Hung Threads | ≥ 1 | ≥ 3 | 抓 javacore，檢查是否在等外部系統或 DB 鎖 |\n| JDBC Pool 使用率 | > 80% | 100% | 檢查連線洩漏（Pool 滿但 DB 端閒置）或慢 SQL |\n| JDBC 等待執行緒 | > 0 持續 1 分鐘 | > 5 | 等待超過 connectionTimeout(10s) 就會丟例外 |"
+  }
+ ]
+}

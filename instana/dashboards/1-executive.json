@@ -1,0 +1,748 @@
+{
+ "title": "仁心醫院 HIS｜1. 主管營運總覽",
+ "accessRules": [
+  {
+   "accessType": "READ_WRITE",
+   "relationType": "GLOBAL",
+   "relatedId": null
+  }
+ ],
+ "widgets": [
+  {
+   "id": "w01",
+   "title": "給誰看、怎麼看",
+   "type": "markdown",
+   "x": 0,
+   "y": 0,
+   "width": 12,
+   "height": 6,
+   "config": "### 🏥 仁心醫院 HIS｜主管營運總覽\n**對象**：院方主管、資訊室主管　**用途**：每天看一眼就知道「病人有沒有被影響」。\n\n只看三件事：**服務量**（今天掛號、看診有沒有照常進行）、**錯誤率**（病人有沒有遇到失敗）、**回應時間**（櫃台與醫師有沒有在等系統）。數字轉紅時，點進 AP / 中介軟體 / DBA 儀表板找原因。"
+  },
+  {
+   "id": "w02",
+   "title": "總交易量（呼叫數）",
+   "type": "bigNumber",
+   "x": 0,
+   "y": 6,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "application",
+     "source": "APPLICATION",
+     "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+     "applicationBoundaryScope": "INBOUND",
+     "metric": "calls",
+     "aggregation": "SUM",
+     "label": "總呼叫數",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "EXPRESSION",
+      "logicalOperator": "AND",
+      "elements": [
+       {
+        "type": "TAG_FILTER",
+        "name": "endpoint.name",
+        "operator": "NOT_EQUAL",
+        "entity": "DESTINATION",
+        "value": "GET /health"
+       }
+      ]
+     },
+     "grouping": [],
+     "includeInternal": false,
+     "includeSynthetic": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "number.detailed"
+   }
+  },
+  {
+   "id": "w03",
+   "title": "錯誤率",
+   "type": "bigNumber",
+   "x": 3,
+   "y": 6,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "application",
+     "source": "APPLICATION",
+     "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+     "applicationBoundaryScope": "INBOUND",
+     "metric": "errors",
+     "aggregation": "MEAN",
+     "label": "錯誤率",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "EXPRESSION",
+      "logicalOperator": "AND",
+      "elements": [
+       {
+        "type": "TAG_FILTER",
+        "name": "endpoint.name",
+        "operator": "NOT_EQUAL",
+        "entity": "DESTINATION",
+        "value": "GET /health"
+       }
+      ]
+     },
+     "grouping": [],
+     "includeInternal": false,
+     "includeSynthetic": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w04",
+   "title": "回應時間 P95",
+   "type": "bigNumber",
+   "x": 6,
+   "y": 6,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "application",
+     "source": "APPLICATION",
+     "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+     "applicationBoundaryScope": "INBOUND",
+     "metric": "latency",
+     "aggregation": "P95",
+     "label": "P95 延遲",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "EXPRESSION",
+      "logicalOperator": "AND",
+      "elements": [
+       {
+        "type": "TAG_FILTER",
+        "name": "endpoint.name",
+        "operator": "NOT_EQUAL",
+        "entity": "DESTINATION",
+        "value": "GET /health"
+       }
+      ]
+     },
+     "grouping": [],
+     "includeInternal": false,
+     "includeSynthetic": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "millis.detailed"
+   }
+  },
+  {
+   "id": "w05",
+   "title": "掛號件數",
+   "type": "bigNumber",
+   "x": 9,
+   "y": 6,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "application",
+     "source": "APPLICATION",
+     "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+     "applicationBoundaryScope": "INBOUND",
+     "metric": "calls",
+     "aggregation": "SUM",
+     "label": "掛號",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "EXPRESSION",
+      "logicalOperator": "AND",
+      "elements": [
+       {
+        "type": "TAG_FILTER",
+        "name": "endpoint.name",
+        "operator": "EQUALS",
+        "entity": "DESTINATION",
+        "value": "POST /appointments"
+       }
+      ]
+     },
+     "grouping": [],
+     "includeInternal": false,
+     "includeSynthetic": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "number.detailed"
+   }
+  },
+  {
+   "id": "w06",
+   "title": "業務交易量（每秒）",
+   "type": "chart",
+   "x": 0,
+   "y": 13,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "掛號",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /appointments"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "看診完成",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /visits/{apptId}/complete"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "查病歷",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /patients/{id}/records"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "開處方",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /prescriptions"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "藥局領藥",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /prescriptions/{rxId}/dispense"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w07",
+   "title": "錯誤率與 HTTP 5xx",
+   "type": "chart",
+   "x": 6,
+   "y": 13,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "percentage.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "errors",
+       "aggregation": "MEAN",
+       "label": "錯誤率",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "SUM",
+       "label": "HTTP 5xx 次數",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "GREATER_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 500
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "call.http.status",
+          "operator": "LESS_OR_EQUAL_THAN",
+          "entity": "NOT_APPLICABLE",
+          "value": 599
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w08",
+   "title": "關鍵交易回應時間 P95",
+   "type": "chart",
+   "x": 0,
+   "y": 26,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "掛號",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /appointments"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "看診完成",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "POST /visits/{apptId}/complete"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "查病歷",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /patients/{id}/records"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w09",
+   "title": "外部依賴：健保卡驗證（健保署閘道）",
+   "type": "chart",
+   "x": 6,
+   "y": 26,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "健保驗證 P95",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /nhi/verify"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "erroneousCalls",
+       "aggregation": "SUM",
+       "label": "健保驗證失敗",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "GET /nhi/verify"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w10",
+   "title": "顧問建議：主管 KPI 與門檻",
+   "type": "markdown",
+   "x": 0,
+   "y": 39,
+   "width": 12,
+   "height": 10,
+   "config": "| KPI | 建議目標（SLO） | 轉黃 | 轉紅 |\n|---|---|---|---|\n| 掛號成功率 | ≥ 99.5% | < 99.5% | < 99% |\n| 掛號 P95 回應時間 | ≤ 1 秒 | > 1 秒 | > 3 秒 |\n| 看診完成（病歷 + 處方）P95 | ≤ 2 秒 | > 2 秒 | > 5 秒 |\n| 整體錯誤率 | ≤ 0.5% | > 0.5% | > 2% |\n| 健保驗證可用率 | ≥ 99% | 連續 5 分鐘失敗 | 連續 15 分鐘失敗 |\n\n建議把「掛號成功率」與「看診完成 P95」設成 Instana SLO，每週例會檢視 Error Budget。"
+  }
+ ]
+}

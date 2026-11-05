@@ -1,0 +1,7 @@
+hospital.env
+*.zip
+was/lib/*.jar
+**/target/
+instana/instanaagent-backup-*.yaml
+instana/dashboards/*.created.json
+__pycache__/

@@ -1,0 +1,727 @@
+{
+ "title": "仁心醫院 HIS｜4. DBA Db2",
+ "accessRules": [
+  {
+   "accessType": "READ_WRITE",
+   "relationType": "GLOBAL",
+   "relatedId": null
+  }
+ ],
+ "widgets": [
+  {
+   "id": "w01",
+   "title": "給誰看、怎麼看",
+   "type": "markdown",
+   "x": 0,
+   "y": 0,
+   "width": 12,
+   "height": 6,
+   "config": "### 🗄️ 仁心醫院 HIS｜DBA（Db2 HISDB）\n**對象**：DBA　**用途**：區分「DB 本身有問題」還是「應用程式用錯 DB」。\n\n看法：**Rows Read / Rows Returned** 暴增 = 全表掃描（缺索引）；**Physical Reads** 上升 = Buffer Pool 不夠或命中率下降；**Lock Wait / Timeout / Deadlock** = 交易設計或批次作業互相卡住。右下角是應用端看到的 SQL 延遲（依資料表）。"
+  },
+  {
+   "id": "w02",
+   "title": "Rows Read vs Rows Returned（讀取效率）",
+   "type": "chart",
+   "x": 0,
+   "y": 6,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "databases.rowsRead",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Rows Read",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "databases.rowsReturned",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Rows Returned",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w03",
+   "title": "Buffer Pool：邏輯讀 vs 實體讀（Data）",
+   "type": "chart",
+   "x": 6,
+   "y": 6,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "bufferpools.dataLogicalReads",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Data Logical Reads",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "bufferpools.dataPhysicalReads",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Data Physical Reads",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w04",
+   "title": "鎖定：Active Lock Waits / Lock Wait Time",
+   "type": "chart",
+   "x": 0,
+   "y": 19,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "vmonlockstats.activeLockWaits",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "Active Lock Waits",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "vmonlockstats.lockWaitTime",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "Lock Wait Time (ms)",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w05",
+   "title": "Deadlocks / Lock Timeouts",
+   "type": "chart",
+   "x": 6,
+   "y": 19,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "workloadstats.deadlocks",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "Deadlocks",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "workloadstats.lockTimeouts",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "Lock Timeouts",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w06",
+   "title": "交易：Commits / Rollbacks",
+   "type": "chart",
+   "x": 0,
+   "y": 32,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "databases.commits",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Commits",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "workloadstats.appRollback",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Rollbacks",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w07",
+   "title": "連線數 / Index 實體讀",
+   "type": "chart",
+   "x": 6,
+   "y": 32,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "vmonlockstats.numberOfConnections",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "連線數",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "bufferpools.indexPhysicalReads",
+       "aggregation": "MEAN",
+       "crossSeriesAggregation": "MEAN",
+       "label": "Index Physical Reads",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w08",
+   "title": "Tablespace 使用率（%，USERSPACE1）",
+   "type": "chart",
+   "x": 0,
+   "y": 45,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "db2Database",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "tablespaceutil.USERSPACE1.spaceUtilPercent",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "USERSPACE1",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.statefulset.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-db2"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w09",
+   "title": "應用端 SQL 延遲 P95（依資料表）",
+   "type": "chart",
+   "x": 6,
+   "y": 45,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "MEDICAL_RECORDS（病歷）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HIS.MEDICAL_RECORDS"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "DRUGS（藥品庫存）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HIS.DRUGS"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "PRESCRIPTIONS（處方）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HIS.PRESCRIPTIONS"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "APPOINTMENTS（掛號）",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HIS.APPOINTMENTS"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "HISDB"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w10",
+   "title": "顧問建議：DBA 告警門檻",
+   "type": "markdown",
+   "x": 0,
+   "y": 58,
+   "width": 12,
+   "height": 9,
+   "config": "| 指標 | 建議門檻 | 說明 |\n|---|---|---|\n| Buffer Pool 命中率 = 1 −（Physical ÷ Logical） | < 95%（OLTP） | 命中率下降先查是否有全表掃描，再考慮加大 BP |\n| Rows Read ÷ Rows Returned | > 100 | 讀很多只回一點 = 缺索引或 SQL 寫法不佳 |\n| Lock Timeouts | > 0 | LOCKTIMEOUT=20s；有逾時代表有交易被卡住 |\n| Deadlocks | > 0 | 檢查交易更新順序是否一致 |\n| Active Lock Waits | > 5 持續 1 分鐘 | 找出持有鎖的長交易 / 批次 |\n| Tablespace 使用率 | > 80% | 預留擴充或歸檔舊病歷 |"
+  }
+ ]
+}

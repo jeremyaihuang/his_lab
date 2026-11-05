@@ -1,0 +1,20 @@
+# 匯入本機 build 的 image 到各 worker 的 containerd（不經過 registry），由 scripts/import-images.sh 使用
+# 每台 worker 一個 privileged Pod，掛載節點根目錄，用 chroot 執行節點上的 ctr；匯入完即刪除
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hospital-image-importer
+  namespace: hospital
+spec:
+  selector: {matchLabels: {app: hospital-image-importer}}
+  template:
+    metadata: {labels: {app: hospital-image-importer}}
+    spec:
+      containers:
+      - name: importer
+        image: busybox:1.36
+        command: ["sh", "-c", "sleep infinity"]
+        securityContext: {privileged: true}
+        volumeMounts: [{name: host, mountPath: /host}]
+        resources: {requests: {cpu: 10m, memory: 16Mi}}
+      volumes: [{name: host, hostPath: {path: /}}]
