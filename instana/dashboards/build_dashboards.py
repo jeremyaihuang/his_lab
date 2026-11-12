@@ -322,8 +322,74 @@ def dba():
     return dashboard("仁心醫院 HIS｜4. DBA Db2", L)
 
 
+# ---------------------------------------------------------------- 5. JVM 效能（tWAS / IBM J9）
+def jvm():
+    L = Layout()
+    J, P = "jvmRuntimePlatform", "process"
+    WAS = [("門診", "hospital-was-his"), ("藥局", "hospital-was-pharmacy")]
+
+    def both(etype, metric, agg, suffix=""):
+        return [infra(etype, metric, agg, f"{name}{suffix}", dep) for name, dep in WAS]
+
+    L.markdown("給誰看、怎麼看",
+               "### ☕ 仁心醫院 HIS｜JVM 效能（tWAS 9.0.5 / IBM J9 Java 8）\n"
+               "**對象**：AP 開發、WAS 管理員、效能調校　**用途**：判斷變慢是不是 JVM 本身造成 — CPU、Heap、GC 停頓、執行緒。\n\n"
+               "看法：**CPU 高** → 到 Analytics → Profiles 看 CPU 火焰圖找熱點方法；**GC 後 Heap 一直往上** → 記憶體洩漏；"
+               "**GC 停頓時間高** → 使用者感覺卡頓；**Blocked 執行緒多** → 鎖競爭（看 Contention profile）。"
+               "IBM J9 使用 gencon：新生代 = nursery（allocate / survivor），老年代 = tenured（SOA / LOA）。", height=7)
+    for name, dep in WAS:
+        L.big(f"{name} Heap 使用率", infra(J, "memory.usedPercentage", "MAX", "Heap %", dep), formatter="percentage.detailed")
+        L.big(f"{name} GC 後 Heap", infra(J, "memory.gc.afterPercentage", "MAX", "GC 後 Heap %", dep), formatter="percentage.detailed")
+    for name, dep in WAS:
+        L.big(f"{name} JVM CPU（user）", infra(P, "cpu.user", "MAX", "CPU user", dep), formatter="percentage.detailed")
+        L.big(f"{name} Blocked 執行緒", infra(J, "threads.blocked", "MAX", "Blocked", dep))
+
+    L.chart("JVM 程序 CPU（user / sys）", both(P, "cpu.user", "MAX", " user") + both(P, "cpu.sys", "MAX", " sys"),
+            formatter="percentage.detailed")
+    L.chart("Heap 使用率 vs GC 後 Heap（%）", both(J, "memory.usedPercentage", "MAX", " 使用中"),
+            formatter="percentage.detailed", y2=both(J, "memory.gc.afterPercentage", "MAX", " GC 後"),
+            y2_formatter="percentage.detailed")
+    L.chart("Heap 用量（Used / Max -Xmx768m）", both(J, "memory.used", "MAX", " Used") + both(J, "memory.max", "MAX", " Max"),
+            formatter="bytes.detailed")
+    L.chart("GC 停頓時間（global / scavenge）",
+            both(J, "gc.global.time", "MAX", " global") + both(J, "gc.scavenge.time", "MAX", " scavenge"),
+            formatter="millis.detailed", y2=both(J, "suspension.time", "MAX", " 總停頓"), y2_formatter="millis.detailed")
+    L.chart("GC 次數（global / scavenge）",
+            both(J, "gc.global.inv", "MAX", " global") + both(J, "gc.scavenge.inv", "MAX", " scavenge"))
+    L.chart("J9 Heap 記憶體池：tenured（老年代）", both(J, "pools.tenured-SOA", "MAX", " tenured-SOA")
+            + both(J, "pools.tenured-LOA", "MAX", " tenured-LOA"), formatter="bytes.detailed")
+    L.chart("J9 Heap 記憶體池：nursery（新生代）", both(J, "pools.nursery-allocate", "MAX", " allocate")
+            + both(J, "pools.nursery-survivor", "MAX", " survivor"), formatter="bytes.detailed")
+    L.chart("Non-Heap：class storage / JIT code cache", both(J, "pools.class storage", "MAX", " class storage")
+            + both(J, "pools.JIT code cache", "MAX", " JIT code cache"), formatter="bytes.detailed")
+    L.chart("執行緒狀態（Runnable / Blocked / Waiting）",
+            both(J, "threads.runnable", "MAX", " Runnable") + both(J, "threads.blocked", "MAX", " Blocked"),
+            y2=both(J, "threads.waiting", "MAX", " Waiting") + both(J, "threads.timed-waiting", "MAX", " Timed-waiting"))
+    L.chart("程序記憶體 RSS / 開啟檔案數", both(P, "mem.resident", "MAX", " RSS"), formatter="bytes.detailed",
+            y2=both(P, "openFiles.current", "MAX", " open files"))
+    L.chart("對照：服務每秒呼叫數 / P95 回應時間", [
+        app("calls", "PER_SECOND", "門診 calls/s", svc("his-outpatient")),
+        app("calls", "PER_SECOND", "藥局 calls/s", svc("his-pharmacy")),
+    ], y2=[
+        app("latency", "P95", "門診 P95", svc("his-outpatient")),
+        app("latency", "P95", "藥局 P95", svc("his-pharmacy")),
+    ], y2_formatter="millis.detailed", width=12)
+    L.markdown("顧問建議：JVM 告警門檻與調校",
+               "| 指標 | 轉黃 | 轉紅 | 處理方向 |\n|---|---|---|---|\n"
+               "| GC 後 Heap 使用率 | > 70% | > 85% 持續 10 分鐘 | 持續上升 = 記憶體洩漏，抓 heapdump；穩定偏高則調大 -Xmx |\n"
+               "| GC 停頓時間佔比 | > 5% | > 10% | 調整 nursery 大小（-Xmn）或 Heap 大小 |\n"
+               "| global GC 次數 | 每分鐘 > 1 | 每分鐘 > 5 | tenured 不足，物件太早晉升或洩漏 |\n"
+               "| JVM CPU | > 70% | > 90% | 看 CPU Profile 火焰圖找熱點方法 |\n"
+               "| Blocked 執行緒 | > 5 | > 20 | 看 Contention Profile / javacore 找鎖 |\n"
+               "| class storage 持續成長 | — | 不斷上升 | Classloader 洩漏（常見於重複部署） |\n\n"
+               "**Profiles**：Analytics → Applications 麵包屑 → **Profiles**，可看 CPU 與 Contention 火焰圖（`chaos.sh on cpu-burn` 可示範）。",
+               height=11)
+    return dashboard("仁心醫院 HIS｜5. JVM 效能", L)
+
+
 if __name__ == "__main__":
-    for key, fn in [("1-executive", executive), ("2-ap", ap), ("3-middleware", middleware), ("4-dba", dba)]:
+    for key, fn in [("1-executive", executive), ("2-ap", ap), ("3-middleware", middleware), ("4-dba", dba),
+                    ("5-jvm", jvm)]:
         d = fn()
         (OUT / f"{key}.json").write_text(json.dumps(d, ensure_ascii=False, indent=1))
         print(f"{key}.json  widgets={len(d['widgets'])}  title={d['title']}")

@@ -81,6 +81,7 @@ IHS 安裝檔 `9.0.5-WS-IHS-ARCHIVE-linux-x86_64-FP025.zip` 需放在專案根�
 | 2. AP 應用維運 | `RezGifN0QIaoYb2Ve36RmQ` |
 | 3. 中介軟體 IHS / WAS | `HS8Nj6rYQGKaPMEBwveNYQ` |
 | 4. DBA Db2 | `0HRGTSrHTG64zJF7MKX2Eg` |
+| 5. JVM 效能（tWAS IBM J9） | `VqagYD1gS9WJVk_w17-pRA` |
 
 Application Perspective「仁心醫院 HIS」：`y0q3DYIfRxWbVRD-aXmLEQ`。定義在 `instana/dashboards/build_dashboards.py`，
 修改後執行 `scripts/update-dashboards.sh y0q3DYIfRxWbVRD-aXmLEQ` 更新；`instana/dashboards/check_dashboards.py` 可檢查每條指標是否查得到資料。

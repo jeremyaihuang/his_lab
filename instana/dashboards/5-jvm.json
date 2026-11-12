@@ -1,0 +1,1958 @@
+{
+ "title": "仁心醫院 HIS｜5. JVM 效能",
+ "accessRules": [
+  {
+   "accessType": "READ_WRITE",
+   "relationType": "GLOBAL",
+   "relatedId": null
+  }
+ ],
+ "widgets": [
+  {
+   "id": "w01",
+   "title": "給誰看、怎麼看",
+   "type": "markdown",
+   "x": 0,
+   "y": 0,
+   "width": 12,
+   "height": 7,
+   "config": "### ☕ 仁心醫院 HIS｜JVM 效能（tWAS 9.0.5 / IBM J9 Java 8）\n**對象**：AP 開發、WAS 管理員、效能調校　**用途**：判斷變慢是不是 JVM 本身造成 — CPU、Heap、GC 停頓、執行緒。\n\n看法：**CPU 高** → 到 Analytics → Profiles 看 CPU 火焰圖找熱點方法；**GC 後 Heap 一直往上** → 記憶體洩漏；**GC 停頓時間高** → 使用者感覺卡頓；**Blocked 執行緒多** → 鎖競爭（看 Contention profile）。IBM J9 使用 gencon：新生代 = nursery（allocate / survivor），老年代 = tenured（SOA / LOA）。"
+  },
+  {
+   "id": "w02",
+   "title": "門診 Heap 使用率",
+   "type": "bigNumber",
+   "x": 0,
+   "y": 7,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "jvmRuntimePlatform",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "memory.usedPercentage",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "Heap %",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-his"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w03",
+   "title": "門診 GC 後 Heap",
+   "type": "bigNumber",
+   "x": 3,
+   "y": 7,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "jvmRuntimePlatform",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "memory.gc.afterPercentage",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "GC 後 Heap %",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-his"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w04",
+   "title": "藥局 Heap 使用率",
+   "type": "bigNumber",
+   "x": 6,
+   "y": 7,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "jvmRuntimePlatform",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "memory.usedPercentage",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "Heap %",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-pharmacy"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w05",
+   "title": "藥局 GC 後 Heap",
+   "type": "bigNumber",
+   "x": 9,
+   "y": 7,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "jvmRuntimePlatform",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "memory.gc.afterPercentage",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "GC 後 Heap %",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-pharmacy"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w06",
+   "title": "門診 JVM CPU（user）",
+   "type": "bigNumber",
+   "x": 0,
+   "y": 14,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "process",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "cpu.user",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "CPU user",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-his"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w07",
+   "title": "門診 Blocked 執行緒",
+   "type": "bigNumber",
+   "x": 3,
+   "y": 14,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "jvmRuntimePlatform",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "threads.blocked",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "Blocked",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-his"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "number.detailed"
+   }
+  },
+  {
+   "id": "w08",
+   "title": "藥局 JVM CPU（user）",
+   "type": "bigNumber",
+   "x": 6,
+   "y": 14,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "process",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "cpu.user",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "CPU user",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-pharmacy"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "percentage.detailed"
+   }
+  },
+  {
+   "id": "w09",
+   "title": "藥局 Blocked 執行緒",
+   "type": "bigNumber",
+   "x": 9,
+   "y": 14,
+   "width": 3,
+   "height": 7,
+   "config": {
+    "metricConfiguration": {
+     "type": "jvmRuntimePlatform",
+     "source": "INFRASTRUCTURE_METRICS",
+     "metric": "threads.blocked",
+     "aggregation": "MAX",
+     "crossSeriesAggregation": "MAX",
+     "label": "Blocked",
+     "color": "",
+     "tagFilterExpression": {
+      "type": "TAG_FILTER",
+      "name": "kubernetes.deployment.name",
+      "operator": "EQUALS",
+      "entity": "NOT_APPLICABLE",
+      "value": "hospital-was-pharmacy"
+     },
+     "regex": false,
+     "timeShift": 0,
+     "lastValue": false,
+     "threshold": {
+      "critical": "",
+      "warning": "",
+      "thresholdEnabled": false,
+      "operator": ">="
+     },
+     "widgetType": "bigNumber"
+    },
+    "formatter": "number.detailed"
+   }
+  },
+  {
+   "id": "w10",
+   "title": "JVM 程序 CPU（user / sys）",
+   "type": "chart",
+   "x": 0,
+   "y": 21,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "percentage.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "cpu.user",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 user",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "cpu.user",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 user",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "cpu.sys",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 sys",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "cpu.sys",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 sys",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w11",
+   "title": "Heap 使用率 vs GC 後 Heap（%）",
+   "type": "chart",
+   "x": 6,
+   "y": 21,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "percentage.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.usedPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 使用中",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.usedPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 使用中",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "percentage.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.gc.afterPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 GC 後",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.gc.afterPercentage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 GC 後",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w12",
+   "title": "Heap 用量（Used / Max -Xmx768m）",
+   "type": "chart",
+   "x": 0,
+   "y": 34,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "bytes.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.used",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Used",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.used",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Used",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.max",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Max",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "memory.max",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Max",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w13",
+   "title": "GC 停頓時間（global / scavenge）",
+   "type": "chart",
+   "x": 6,
+   "y": 34,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.global.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 global",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.global.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 global",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.scavenge.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 scavenge",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.scavenge.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 scavenge",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "suspension.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 總停頓",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "suspension.time",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 總停頓",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w14",
+   "title": "GC 次數（global / scavenge）",
+   "type": "chart",
+   "x": 0,
+   "y": 47,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.global.inv",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 global",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.global.inv",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 global",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.scavenge.inv",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 scavenge",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "gc.scavenge.inv",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 scavenge",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w15",
+   "title": "J9 Heap 記憶體池：tenured（老年代）",
+   "type": "chart",
+   "x": 6,
+   "y": 47,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "bytes.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.tenured-SOA",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 tenured-SOA",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.tenured-SOA",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 tenured-SOA",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.tenured-LOA",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 tenured-LOA",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.tenured-LOA",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 tenured-LOA",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w16",
+   "title": "J9 Heap 記憶體池：nursery（新生代）",
+   "type": "chart",
+   "x": 0,
+   "y": 60,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "bytes.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.nursery-allocate",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 allocate",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.nursery-allocate",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 allocate",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.nursery-survivor",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 survivor",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.nursery-survivor",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 survivor",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w17",
+   "title": "Non-Heap：class storage / JIT code cache",
+   "type": "chart",
+   "x": 6,
+   "y": 60,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "bytes.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.class storage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 class storage",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.class storage",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 class storage",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.JIT code cache",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 JIT code cache",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "pools.JIT code cache",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 JIT code cache",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": []
+    }
+   }
+  },
+  {
+   "id": "w18",
+   "title": "執行緒狀態（Runnable / Blocked / Waiting）",
+   "type": "chart",
+   "x": 0,
+   "y": 73,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.runnable",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Runnable",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.runnable",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Runnable",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.blocked",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Blocked",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.blocked",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Blocked",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.waiting",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Waiting",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.waiting",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Waiting",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.timed-waiting",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 Timed-waiting",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "jvmRuntimePlatform",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "threads.timed-waiting",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 Timed-waiting",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w19",
+   "title": "程序記憶體 RSS / 開啟檔案數",
+   "type": "chart",
+   "x": 6,
+   "y": 73,
+   "width": 6,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "bytes.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "mem.resident",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 RSS",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "mem.resident",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 RSS",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "openFiles.current",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "門診 open files",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-his"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "process",
+       "source": "INFRASTRUCTURE_METRICS",
+       "metric": "openFiles.current",
+       "aggregation": "MAX",
+       "crossSeriesAggregation": "MAX",
+       "label": "藥局 open files",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "TAG_FILTER",
+        "name": "kubernetes.deployment.name",
+        "operator": "EQUALS",
+        "entity": "NOT_APPLICABLE",
+        "value": "hospital-was-pharmacy"
+       },
+       "regex": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w20",
+   "title": "對照：服務每秒呼叫數 / P95 回應時間",
+   "type": "chart",
+   "x": 0,
+   "y": 86,
+   "width": 12,
+   "height": 13,
+   "config": {
+    "type": "TIME_SERIES",
+    "y1": {
+     "formatter": "number.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "門診 calls/s",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "his-outpatient"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "calls",
+       "aggregation": "PER_SECOND",
+       "label": "藥局 calls/s",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "his-pharmacy"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    },
+    "y2": {
+     "formatter": "millis.detailed",
+     "renderer": "line",
+     "metrics": [
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "門診 P95",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "his-outpatient"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      },
+      {
+       "type": "application",
+       "source": "APPLICATION",
+       "applicationId": "y0q3DYIfRxWbVRD-aXmLEQ",
+       "applicationBoundaryScope": "INBOUND",
+       "metric": "latency",
+       "aggregation": "P95",
+       "label": "藥局 P95",
+       "color": "",
+       "tagFilterExpression": {
+        "type": "EXPRESSION",
+        "logicalOperator": "AND",
+        "elements": [
+         {
+          "type": "TAG_FILTER",
+          "name": "service.name",
+          "operator": "EQUALS",
+          "entity": "DESTINATION",
+          "value": "his-pharmacy"
+         },
+         {
+          "type": "TAG_FILTER",
+          "name": "endpoint.name",
+          "operator": "NOT_EQUAL",
+          "entity": "DESTINATION",
+          "value": "GET /health"
+         }
+        ]
+       },
+       "grouping": [],
+       "includeInternal": false,
+       "includeSynthetic": false,
+       "timeShift": 0,
+       "lastValue": false,
+       "threshold": {
+        "critical": "",
+        "warning": "",
+        "thresholdEnabled": false,
+        "operator": ">="
+       },
+       "widgetType": "chart"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "w21",
+   "title": "顧問建議：JVM 告警門檻與調校",
+   "type": "markdown",
+   "x": 0,
+   "y": 99,
+   "width": 12,
+   "height": 11,
+   "config": "| 指標 | 轉黃 | 轉紅 | 處理方向 |\n|---|---|---|---|\n| GC 後 Heap 使用率 | > 70% | > 85% 持續 10 分鐘 | 持續上升 = 記憶體洩漏，抓 heapdump；穩定偏高則調大 -Xmx |\n| GC 停頓時間佔比 | > 5% | > 10% | 調整 nursery 大小（-Xmn）或 Heap 大小 |\n| global GC 次數 | 每分鐘 > 1 | 每分鐘 > 5 | tenured 不足，物件太早晉升或洩漏 |\n| JVM CPU | > 70% | > 90% | 看 CPU Profile 火焰圖找熱點方法 |\n| Blocked 執行緒 | > 5 | > 20 | 看 Contention Profile / javacore 找鎖 |\n| class storage 持續成長 | — | 不斷上升 | Classloader 洩漏（常見於重複部署） |\n\n**Profiles**：Analytics → Applications 麵包屑 → **Profiles**，可看 CPU 與 Contention 火焰圖（`chaos.sh on cpu-burn` 可示範）。"
+  }
+ ]
+}

@@ -20,3 +20,7 @@ com.instana.plugin.websphere:
 # IBM HTTP Server：從 mod_status (/server-status) 取指標；不啟用 IHS tracing
 com.instana.plugin.httpd:
   poll_rate: 5
+
+# Java AutoProfile（Continuous Profiling）：tWAS 的 JVM 會出現在 Analytics → Profiles
+com.instana.plugin.profiling.java:
+  enabled: true
