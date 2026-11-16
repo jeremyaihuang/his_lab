@@ -25,6 +25,15 @@ spec:
     metadata:
       labels: {app: hospital-db2, tier: db}
     spec:
+      # Db2 image 的啟動腳本在第一次建 instance 後會把 fencedid 改成 root:root，
+      # 但容器重啟時 db2icrt -update-instance-if-exists 要求 root:db2iadm1（DBI20187E）→ 每次重啟都失敗。
+      # 啟動前先改回 root:db2iadm1（GID 1000，與 /database/config/db2inst1 的群組一致）。
+      initContainers:
+      - name: fix-fencedid
+        image: icr.io/db2_community/db2:12.1.3.0
+        command: ["sh", "-c", "f=/database/config/db2inst1/sqllib/adm/fencedid; if [ -f $f ]; then chown 0:1000 $f && ls -ln $f; else echo 'no fencedid yet (first start)'; fi"]
+        volumeMounts:
+        - {name: data, mountPath: /database}
       containers:
       - name: db2
         image: icr.io/db2_community/db2:12.1.3.0
